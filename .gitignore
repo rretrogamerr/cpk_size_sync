@@ -1,0 +1,26 @@
+# Build artifacts
+/target
+**/*.rlib
+
+# Backup and temp files
+**/*.rs.bk
+**/*.rs.swp
+**/*.rs.swo
+*.pdb
+*.profraw
+*.profdata
+
+# Coverage reports
+/coverage
+
+# IDE/editor settings
+.vscode/
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# test
+fixtures/*.bin
