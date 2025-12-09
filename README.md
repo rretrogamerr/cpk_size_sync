@@ -1,23 +1,34 @@
 # cpk_size_sync
 
-LEVEL5 게임의 `cpk_list.cfg.bin`을 언어 패치하면 생성되는 테이블의 파일 용량 정보를, 원본 `cpk_list.cfg.bin`에 덮어써 일관된 크기 정보를 만들어주는 작은 CLI 도구입니다.
+Small CLI that keeps file-size metadata in Level-5 `cpk_list.cfg.bin` tables consistent after applying a language patch.
 
-## 요구 사항
-- Rust 1.70+ (안정 채널이면 충분합니다)
+## What it does
+- Reads two versions of the table: an original `cpk_list.cfg.bin` and a patched one that already has correct sizes.
+- Extracts `CPK_ITEM` entries keyed by the path parts (first two string fields).
+- Takes the patched size value (3rd value, index `2`) for entries without a suffix and maps it to the matching entry in the original file.
+- Writes the size into the original file’s primary size field (5th value, index `4`), preserving the original integer width so the table layout stays intact.
+- Outputs a synchronized table where every size field matches the patched data while all other metadata remains untouched.
 
-## 사용법
-- **개발 중**: 내부 빌드된 바이너리로 실행합니다.
+Use it when a modded table has good size information but you need to keep the original structure and checksums elsewhere in the file.
+
+## Requirements
+- Rust 1.70+ (stable channel is fine)
+
+## Usage
+- Development build:
   ```bash
   cargo run --release -- original.bin patched.bin synced.bin
   ```
-- **배포판**: 배포된 실행 파일을 바로 사용합니다.
+- Released binary:
   ```bash
   cpk_file_size_sync original.bin patched.bin synced.bin
   ```
 
-인수 설명:
-- `original.bin`: 크기를 갱신할 원본 CPK 테이블
-- `patched.bin`: 크기 정보가 올바르게 들어 있는 패치 테이블
-- `synced.bin`: 출력 파일 경로 (필수)
+Arguments:
+- `original.bin`: Source table whose size fields will be updated.
+- `patched.bin`: Patched table that contains the correct size values.
+- `synced.bin`: Output path for the synchronized table (required).
 
-디버그 로그가 필요하면 실행 전에 `CPK_DEBUG=1`을 설정하세요.
+Notes:
+- `-h`/`--help` shows CLI help, `-v`/`--version` prints the version.
+- Set `CPK_DEBUG=1` to print parsed entry details while running.
