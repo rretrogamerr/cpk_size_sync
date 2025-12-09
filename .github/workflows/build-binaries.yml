@@ -1,14 +1,9 @@
 name: Build Binaries
 
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag for the release (e.g. v1.2.3)'
-        required: true
-      release_name:
-        description: 'Optional release name (defaults to tag)'
-        required: false
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   contents: write
@@ -51,7 +46,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.event.inputs.tag }}
-          name: ${{ github.event.inputs.release_name || github.event.inputs.tag }}
+          tag_name: ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
           target_commitish: ${{ github.sha }}
           files: artifacts/**/*
