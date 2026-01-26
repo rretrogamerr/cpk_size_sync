@@ -130,10 +130,12 @@ fn run(path_a: &PathBuf, path_b: &PathBuf, path_c: &PathBuf) -> Result<u32, Stri
     let parsed_a = parse_t2b(path_a).map_err(|e| format!("parse original: {e}"))?;
     let parsed_b = parse_t2b(path_b).map_err(|e| format!("parse modified: {e}"))?;
 
-    const B_PRIMARY_SIZE_INDEX: usize = 2; // B의 3번째 줄 (패치된 항목만)
+    const B_PRIMARY_SIZE_INDEX: usize = 4; // B의 5번째 줄 (패치된 항목만)
     const A_PRIMARY_SIZE_INDEX: usize = 4; // A에서 기본 5번째 줄
+    const B_EMPTY_FIELD_INDEX_1: usize = 2; // B의 3번째 줄
+    const B_EMPTY_FIELD_INDEX_2: usize = 3; // B의 4번째 줄
 
-    // Build size map from B (size: require numeric at index 2, and only when suffix is empty).
+    // Build size map from B (size: require numeric at index 4, and only when 3rd/4th fields are empty).
     let mut size_map: HashMap<String, (i64, ValueLength)> = HashMap::new();
     for entry in &parsed_b.entries {
         if entry.name != "CPK_ITEM" {
@@ -146,8 +148,17 @@ fn run(path_a: &PathBuf, path_b: &PathBuf, path_c: &PathBuf) -> Result<u32, Stri
         }
         let (prefix, suffix) = key.unwrap();
 
-        // Only consider patched entries (suffix empty or quotes treated as empty).
-        if !suffix.trim_matches('"').is_empty() {
+        let empty_field_2 = entry
+            .values
+            .get(B_EMPTY_FIELD_INDEX_1)
+            .map(is_empty_string_field)
+            .unwrap_or(false);
+        let empty_field_3 = entry
+            .values
+            .get(B_EMPTY_FIELD_INDEX_2)
+            .map(is_empty_string_field)
+            .unwrap_or(false);
+        if !(empty_field_2 && empty_field_3) {
             continue;
         }
 
@@ -203,7 +214,10 @@ fn run(path_a: &PathBuf, path_b: &PathBuf, path_c: &PathBuf) -> Result<u32, Stri
     }
 
     if size_map.is_empty() {
-        return Err("No patched CPK_ITEM entries found in B (needs empty second field and numeric third field)".into());
+        return Err(
+            "No patched CPK_ITEM entries found in B (needs empty third/fourth fields and numeric fifth field)"
+                .into(),
+        );
     }
 
     // Work on mutable copy of A bytes.
@@ -274,6 +288,14 @@ fn path_key(entry: &Entry) -> Option<(String, String)> {
         _ => String::new(),
     };
     Some((prefix, suffix))
+}
+
+fn is_empty_string_field(field: &ValueField) -> bool {
+    match &field.data {
+        ValueData::Str(None) => true,
+        ValueData::Str(Some(s)) => s.trim_matches('"').is_empty(),
+        _ => false,
+    }
 }
 
 fn parse_t2b(path: &PathBuf) -> Result<ParsedT2b, String> {

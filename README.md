@@ -5,7 +5,7 @@ Small CLI that keeps file-size metadata in Level-5 `cpk_list.cfg.bin` tables con
 ## What it does
 - Reads two versions of the table: an original `cpk_list.cfg.bin` and a patched one that already has correct sizes.
 - Extracts `CPK_ITEM` entries keyed by the path parts (first two string fields).
-- Takes the patched size value (3rd value, index `2`) for entries without a suffix and maps it to the matching entry in the original file.
+- Takes the patched size value (5th value, index `4`) for entries where the 3rd and 4th fields are empty and maps it to the matching entry in the original file.
 - Writes the size into the original file’s primary size field (5th value, index `4`), preserving the original integer width so the table layout stays intact.
 - Outputs a synchronized table where every size field matches the patched data while all other metadata remains untouched.
 
